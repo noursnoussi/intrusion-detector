@@ -5,11 +5,8 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import classification_report
 import joblib
 import os
-
-# Créer le dossier models/ s'il n'existe pas
 os.makedirs("models", exist_ok=True)
 
-# Charger les noms de colonnes
 columns = [
     "duration","protocol_type","service","flag","src_bytes","dst_bytes","land","wrong_fragment","urgent",
     "hot","num_failed_logins","logged_in","num_compromised","root_shell","su_attempted","num_root",
@@ -19,35 +16,24 @@ columns = [
     "dst_host_diff_srv_rate","dst_host_same_src_port_rate","dst_host_srv_diff_host_rate","dst_host_serror_rate",
     "dst_host_srv_serror_rate","dst_host_rerror_rate","dst_host_srv_rerror_rate", "target"
 ]
-
-
-# Lire le fichier d'entraînement
 df = pd.read_csv('data/KDDTrain+.txt', names=columns)
-
-# Encoder les colonnes non numériques
 for col in df.select_dtypes(include='object'):
     df[col] = LabelEncoder().fit_transform(df[col])
 
-# Binariser la classe : normal = 0, attack = 1
-# La classe "normal" a le label 11 après encodage (selon l'ordre dans KDDTrain+)
 y = df['target']
-y = y.apply(lambda x: 0 if x == 11 else 1)  # 0 = normal, 1 = attaque
+y = y.apply(lambda x: 0 if x == 11 else 1) 
 
 X = df.drop(['target'], axis=1)
 
-# Split en train/test pour évaluation
 X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.3, random_state=42)
 
-# Entraîner le modèle
 model = RandomForestClassifier(n_estimators=100, random_state=42)
 model.fit(X_train, y_train)
 
-# Évaluer
 y_pred = model.predict(X_val)
-print("📊 Rapport de classification :\n")
+print(" Rapport de classification :\n")
 print(classification_report(y_val, y_pred, target_names=["Normal", "Attaque"]))
 
-# Sauvegarder le modèle
 joblib.dump(model, 'models/intrusion_model.pkl')
-print("✅ Modèle sauvegardé dans models/intrusion_model.pkl")
+print("Modèle sauvegardé dans models/intrusion_model.pkl")
 

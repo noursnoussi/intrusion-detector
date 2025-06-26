@@ -1,10 +1,6 @@
 import pandas as pd
 from scapy.all import rdpcap, ARP
-
-# Charger les paquets depuis le fichier pcapng
 packets = rdpcap("arp.pcapng")
-
-# Colonnes attendues par le modèle (sans "target")
 expected_columns = [
     "duration", "protocol_type", "service", "flag", "src_bytes", "dst_bytes", "land", "wrong_fragment", "urgent",
     "hot", "num_failed_logins", "logged_in", "num_compromised", "root_shell", "su_attempted", "num_root",
@@ -15,7 +11,6 @@ expected_columns = [
     "dst_host_srv_serror_rate", "dst_host_rerror_rate", "dst_host_srv_rerror_rate"
 ]
 
-# Extraire les données ARP
 arp_data = []
 for pkt in packets:
     if ARP in pkt:
@@ -65,17 +60,15 @@ for pkt in packets:
         }
         arp_data.append(row)
 
-# Créer le DataFrame final
+
 df = pd.DataFrame(arp_data)
 
-# Ajouter les colonnes manquantes (par sécurité)
 for col in expected_columns:
     if col not in df.columns:
         df[col] = 0
 
 df = df[expected_columns]
 
-# Sauvegarder dans un CSV prêt pour le modèle
 df.to_csv("arp_dataset_for_model.csv", index=False)
 print("Dataset compatible généré : arp_dataset_for_model.csv")
 

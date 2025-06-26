@@ -1,10 +1,9 @@
 import pandas as pd
 from scapy.all import rdpcap, IP, TCP, UDP, ICMP, ARP
 
-# Charger les paquets
+
 packets = rdpcap("arp.pcapng")
 
-# Colonnes attendues par le modèle
 model_columns = [
     "duration", "protocol_type", "service", "flag", "src_bytes", "dst_bytes", "land", "wrong_fragment", "urgent",
     "hot", "num_failed_logins", "logged_in", "num_compromised", "root_shell", "su_attempted", "num_root",
@@ -18,18 +17,14 @@ model_columns = [
 extracted_data = []
 
 for pkt in packets:
-    row = {col: 0 for col in model_columns}  # Valeurs par défaut
-    
-    # Duration = on utilise 0 (ou on peut calculer le temps entre paquets)
+    row = {col: 0 for col in model_columns}  
     row["duration"] = 0
-    
-    # Type de protocole
     if ARP in pkt:
         row["protocol_type"] = "arp"
         row["service"] = "arp"
     elif TCP in pkt:
         row["protocol_type"] = "tcp"
-        row["service"] = "http"  # par défaut
+        row["service"] = "http"  
     elif UDP in pkt:
         row["protocol_type"] = "udp"
         row["service"] = "domain_u"
@@ -40,9 +35,8 @@ for pkt in packets:
         row["protocol_type"] = "other"
         row["service"] = "other"
 
-    row["flag"] = "SF"  # Par défaut
+    row["flag"] = "SF"  
 
-    # Données transférées (si IP)
     if IP in pkt:
         row["src_bytes"] = len(pkt[IP].payload)
         row["dst_bytes"] = len(pkt[IP])
@@ -50,11 +44,9 @@ for pkt in packets:
         row["src_bytes"] = 0
         row["dst_bytes"] = 0
 
-    # Exemple : land = 1 si IP source == IP dest
     if IP in pkt and pkt[IP].src == pkt[IP].dst:
         row["land"] = 1
 
-    # Champs statistiques simulés
     row["count"] = 1
     row["srv_count"] = 1
     row["same_srv_rate"] = 1.0
@@ -62,11 +54,9 @@ for pkt in packets:
     row["dst_host_srv_count"] = 1
     row["dst_host_same_srv_rate"] = 1.0
 
-    # Toutes les autres restent à 0
 
     extracted_data.append(row)
 
-# Sauvegarder en CSV
 df = pd.DataFrame(extracted_data)
 df.to_csv("smart_arp_dataset.csv", index=False)
 print("Dataset généré : smart_arp_dataset.csv")
